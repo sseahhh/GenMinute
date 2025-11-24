@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Minute AI{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <nav class="main-nav">
+            <div class="nav-logo">
+                <img src="{{ url_for('static', filename='image/logo.png') }}" alt="GenMinute Logo">
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-header">Meeting</li>
+                <li class="nav-item" data-page="index"><a href="{{ url_for('meetings.index') }}"><i class="fa-solid fa-plus"></i> 새노트 만들기</a></li>
+                <li class="nav-item" data-page="list_notes"><a href="{{ url_for('meetings.notes') }}"><i class="fa-solid fa-folder-open"></i> 노트 보기</a></li>
+                <li class="nav-item" data-page="shared_notes"><a href="{{ url_for('meetings.shared_notes') }}"><i class="fa-solid fa-share-nodes"></i> 공유 노트 보기</a></li>
+                {% if is_admin %}
+                <li class="nav-header">Debug</li>
+                <li class="nav-item" data-page="retriever_page"><a href="{{ url_for('admin.retriever_page') }}"><i class="fa-solid fa-magnifying-glass"></i> 리트리버</a></li>
+                <li class="nav-item" data-page="script_input_page"><a href="{{ url_for('admin.script_input_page') }}"><i class="fa-solid fa-file-lines"></i> 스크립트 입력</a></li>
+                <li class="nav-item" data-page="test_stt_page"><a href="{{ url_for('admin.test_stt_page') }}"><i class="fa-solid fa-microphone"></i> STT 테스트</a></li>
+                <li class="nav-item" data-page="test_summary_page"><a href="{{ url_for('admin.test_summary_page') }}"><i class="fa-solid fa-file-contract"></i> 요약 테스트</a></li>
+                <li class="nav-item" data-page="test_minutes_page"><a href="{{ url_for('admin.test_minutes_page') }}"><i class="fa-solid fa-clipboard-list"></i> 회의록 테스트</a></li>
+                <li class="nav-item" data-page="test_mindmap_page"><a href="{{ url_for('admin.test_mindmap_page') }}"><i class="fa-solid fa-sitemap"></i> 마인드맵 테스트</a></li>
+                {% endif %}
+            </ul>
+
+            <!-- Spacer to push Account section to bottom -->
+            <div class="nav-spacer"></div>
+
+            <!-- Account Section (bottom) -->
+            <ul class="nav-menu nav-account">
+                <li class="nav-header">Account</li>
+
+                <!-- User Info Card -->
+                <li class="user-info-card">
+                    <div class="user-avatar">
+                        {% if user_picture %}
+                            <img src="{{ user_picture }}" alt="프로필">
+                        {% else %}
+                            <div class="user-avatar-placeholder">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">{{ user_name or '사용자명' }}</div>
+                        <div class="user-email">{{ user_email or 'user@email.com' }}</div>
+                    </div>
+                </li>
+
+                <li class="nav-item"><a href="#" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> 로그아웃</a></li>
+            </ul>
+        </nav>
+
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Chatbot Toggle Tab (when collapsed) -->
+        <button class="chatbot-toggle-tab" id="chatbot-toggle-tab" title="AI Assistant">
+            <span class="tab-icon">&#10094;</span>
+            <span class="tab-text">CHAT</span>
+        </button>
+
+        <!-- Chatbot Sidebar -->
+        <aside class="chatbot-sidebar" id="chatbot-sidebar">
+            <div class="chatbot-header">
+                <div class="chatbot-header-left">
+                    <i class="fa-solid fa-robot chatbot-icon-header"></i>
+                    <h3>AI Assistant</h3>
+                </div>
+                <button class="btn-close-chatbot" id="btn-close-chatbot">&times;</button>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chatbot-welcome">
+                    <div class="chatbot-icon-large"><i class="fa-solid fa-robot"></i></div>
+                    <p>안녕하세요! 회의 내용에 대해 무엇이든 물어보세요.</p>
+                </div>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" id="chatbot-input" class="chatbot-input" placeholder="메시지를 입력하세요...">
+                <button id="chatbot-send-btn" class="chatbot-send-btn">전송</button>
+            </div>
+        </aside>
+    </div>
+    <script>
+        // 현재 페이지에 맞는 메뉴 항목 활성화
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const navItems = document.querySelectorAll('.nav-item');
+
+            // 경로와 data-page 매핑
+            const pathMapping = {
+                '/': 'index',
+                '/notes': 'list_notes',
+                '/shared-notes': 'shared_notes',
+                '/script-input': 'script_input_page',
+                '/test-stt': 'test_stt_page',
+                '/retriever': 'retriever_page',
+                '/summary_template': 'summary_template_page',
+                '/test-summary': 'test_summary_page',
+                '/test-minutes': 'test_minutes_page',
+                '/test-mindmap': 'test_mindmap_page'
+            };
+
+            // 현재 경로에 맞는 data-page 찾기
+            let targetPage = pathMapping[currentPath];
+
+            // view 페이지인 경우 미팅업로드를 활성화하지 않음
+            if (currentPath.startsWith('/view/')) {
+                targetPage = null;
+            }
+
+            // 모든 nav-item에서 active 제거
+            navItems.forEach(item => item.classList.remove('active'));
+
+            // 해당하는 메뉴 항목에 active 추가
+            if (targetPage) {
+                const targetItem = document.querySelector(`.nav-item[data-page="${targetPage}"]`);
+                if (targetItem) {
+                    targetItem.classList.add('active');
+                }
+            }
+
+            // 로그아웃 버튼 이벤트
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+
+                    if (!confirm('로그아웃 하시겠습니까?')) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // 챗봇 대화 기록 및 상태 초기화
+                            sessionStorage.removeItem('chatbot_history');
+                            sessionStorage.removeItem('chatbot_state');
+                            console.log('✅ 챗봇 데이터 초기화 완료');
+
+                            // 로그인 페이지로 리다이렉트
+                            window.location.href = '/login';
+                        } else {
+                            alert('로그아웃에 실패했습니다.');
+                        }
+                    } catch (error) {
+                        console.error('로그아웃 오류:', error);
+                        alert('로그아웃 중 오류가 발생했습니다.');
+                    }
+                });
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

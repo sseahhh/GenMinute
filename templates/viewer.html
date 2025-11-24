@@ -1,0 +1,677 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title or '회의록 뷰어' }}{% endblock %}
+
+{% block content %}
+<main class="content-panel">
+    <div class="viewer-container">
+        <header class="viewer-header">
+            <div class="title-edit-container">
+                <h1 id="meeting-title">회의록 로딩 중...</h1>
+                <button id="edit-title-btn" class="btn-edit-title" title="제목 수정" style="display: none;">
+                    <i class="fa-solid fa-pencil"></i>
+                </button>
+            </div>
+            <div id="title-edit-mode" class="title-edit-mode" style="display: none;">
+                <input type="text" id="title-input" class="title-input" maxlength="100" placeholder="제목을 입력하세요">
+                <button id="save-title-btn" class="btn-save-title">저장</button>
+                <button id="cancel-title-btn" class="btn-cancel-title">취소</button>
+            </div>
+        </header>
+
+        <!-- 회의 정보 섹션 -->
+        <div class="meeting-info-section">
+            <div class="meeting-date">
+                <div class="date-edit-container">
+                    <span id="meeting-date-display">날짜 로딩 중...</span>
+                    <button id="edit-date-btn" class="btn-edit-date" title="날짜 수정" style="display: none;">
+                        <i class="fa-solid fa-pencil"></i>
+                    </button>
+                </div>
+                <div id="date-edit-mode" class="date-edit-mode" style="display: none;">
+                    <input type="datetime-local" id="date-input" class="date-input">
+                    <button id="save-date-btn" class="btn-save-date">저장</button>
+                    <button id="cancel-date-btn" class="btn-cancel-date">취소</button>
+                </div>
+            </div>
+            <div class="meeting-participants">
+                <div class="participants-list" id="participants-list">
+                    <!-- 참석자 아이콘들이 동적으로 추가됨 -->
+                </div>
+                <button class="speaker-share-btn" id="speaker-share-btn" title="화자별 점유율 보기">
+                    📊
+                </button>
+                <button class="mindmap-btn" id="mindmap-btn" title="마인드맵 보기">
+                    🗺️
+                </button>
+            </div>
+        </div>
+
+        <div class="player-container">
+            <!-- 비디오 플레이어 (MP4용) -->
+            <video id="video-player" controls style="display: none;"></video>
+            <!-- 오디오 플레이어 (WAV, MP3, M4A, FLAC용) -->
+            <audio id="audio-player" controls style="display: none;"></audio>
+        </div>
+
+        <!-- 탭 네비게이션 -->
+        <div class="tabs-container">
+            <button class="tab-button active" data-tab="script">스크립트</button>
+            <button class="tab-button" data-tab="summary">문단 요약</button>
+            <button class="tab-button" data-tab="minutes">회의록</button>
+        </div>
+
+        <!-- 탭 컨텐츠 -->
+        <div class="tab-content-container">
+            <!-- 스크립트 탭 -->
+            <div id="script-tab" class="tab-content active">
+                <div id="transcript-container" class="transcript-container">
+                    <p>데이터를 불러오는 중입니다...</p>
+                </div>
+            </div>
+
+            <!-- 문단 요약 탭 -->
+            <div id="summary-tab" class="tab-content">
+                <button id="copy-summary-btn" class="btn-copy-content" title="문단 요약 복사">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+                <div id="summary-container" class="summary-container">
+                    <p class="summary-placeholder">문단 요약을 불러오는 중입니다...</p>
+                </div>
+            </div>
+
+            <!-- 회의록 탭 -->
+            <div id="minutes-tab" class="tab-content">
+                <button id="copy-minutes-btn" class="btn-copy-content" title="회의록 복사">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+                <div id="minutes-container" class="minutes-container minutes-empty">
+                    <p class="minutes-placeholder">회의록 생성 버튼을 눌러 정식 회의록을 작성하세요.</p>
+                    <button id="generate-minutes-button" class="btn-primary">회의록 생성</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 화자별 점유율 모달 -->
+        <div id="speaker-share-modal" class="speaker-share-modal">
+            <div class="speaker-share-modal-content">
+                <div class="speaker-share-modal-header">
+                    <h3>화자별 대화 점유율</h3>
+                    <button class="modal-close-btn" id="close-share-modal">&times;</button>
+                </div>
+                <div class="speaker-share-modal-body">
+                    <canvas id="speakerShareChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 마인드맵 모달 -->
+        <div id="mindmap-modal" class="mindmap-modal">
+            <div class="mindmap-modal-content">
+                <div class="mindmap-modal-header">
+                    <h3>회의록 마인드맵</h3>
+                    <button class="modal-close-btn" id="close-mindmap-modal">&times;</button>
+                </div>
+                <div class="mindmap-modal-body">
+                    <div id="mindmap-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 회의록 생성 진행 모달 -->
+        <div id="minutes-progress-modal" class="minutes-progress-modal">
+            <div class="minutes-progress-modal-content">
+                <!-- 진행 아이콘 -->
+                <div class="minutes-progress-icon">📄</div>
+
+                <!-- 상태 메시지 -->
+                <p id="minutes-progress-status">회의록을 생성하고 있습니다...</p>
+
+                <!-- 로딩 스피너 -->
+                <div class="minutes-spinner"></div>
+
+                <p class="minutes-progress-tip">잠시만 기다려주세요</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+/* 제목 편집 컨테이너 */
+.title-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.title-edit-container h1 {
+    margin: 0;
+    flex: 1;
+}
+
+/* 연필 버튼 스타일 */
+.btn-edit-title {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit-title:hover {
+    background: #2980b9;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-edit-title:active {
+    transform: scale(0.95);
+}
+
+/* 편집 모드 컨테이너 */
+.title-edit-mode {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #3498db;
+}
+
+/* 제목 입력 필드 */
+.title-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.title-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* 저장 버튼 */
+.btn-save-title {
+    padding: 0.75rem 1.5rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-save-title:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-save-title:active {
+    transform: translateY(0);
+}
+
+/* 취소 버튼 */
+.btn-cancel-title {
+    padding: 0.75rem 1.5rem;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-cancel-title:hover {
+    background: #7f8c8d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-cancel-title:active {
+    transform: translateY(0);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .title-edit-mode {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .title-input {
+        width: 100%;
+    }
+
+    .btn-save-title,
+    .btn-cancel-title {
+        width: 100%;
+    }
+}
+
+/* ==================== 날짜 편집 스타일 ==================== */
+
+/* 날짜 편집 컨테이너 */
+.date-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* 날짜 연필 버튼 스타일 */
+.btn-edit-date {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-edit-date:hover {
+    background: #2980b9;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-edit-date:active {
+    transform: scale(0.95);
+}
+
+/* 날짜 편집 모드 컨테이너 */
+.date-edit-mode {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #3498db;
+}
+
+/* 날짜 입력 필드 */
+.date-input {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.95rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.date-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* 저장/취소 버튼 */
+.btn-save-date,
+.btn-cancel-date {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-save-date {
+    background: #3498db;
+    color: white;
+}
+
+.btn-save-date:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-save-date:active {
+    transform: translateY(0);
+}
+
+.btn-cancel-date {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-cancel-date:hover {
+    background: #7f8c8d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-cancel-date:active {
+    transform: translateY(0);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .date-edit-mode {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-input {
+        width: 100%;
+    }
+
+    .btn-save-date,
+    .btn-cancel-date {
+        width: 100%;
+    }
+}
+
+/* ==================== 복사 버튼 스타일 ==================== */
+
+/* 탭 컨텐츠를 relative로 설정 */
+.tab-content {
+    position: relative;
+}
+
+/* 복사 버튼 스타일 */
+.btn-copy-content {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.btn-copy-content:hover {
+    background: #f0f0f0;
+    border-color: #3498db;
+    color: #3498db;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-copy-content:active {
+    transform: scale(0.95);
+}
+
+/* 복사 성공 애니메이션 */
+.btn-copy-content.copied {
+    background: #27ae60;
+    border-color: #27ae60;
+    color: white;
+}
+
+.btn-copy-content.copied i {
+    display: none;
+}
+
+.btn-copy-content.copied::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+/* 복사 버튼 숨기기 (로딩 중이거나 비어있을 때) */
+.tab-content.empty .btn-copy-content {
+    display: none;
+}
+
+/* 회의록 탭의 복사 버튼은 기본적으로 숨김 (회의록 생성 전) */
+#copy-minutes-btn {
+    display: none;
+}
+
+/* ==================== 마인드맵 버튼 스타일 ==================== */
+
+.mindmap-btn {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mindmap-btn:hover {
+    background: #f0f0f0;
+    border-color: #9b59b6;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mindmap-btn:active {
+    transform: scale(0.95);
+}
+
+/* ==================== 마인드맵 모달 스타일 ==================== */
+
+.mindmap-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+.mindmap-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mindmap-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1200px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+.mindmap-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.mindmap-modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.mindmap-modal-body {
+    flex: 1;
+    padding: 2rem;
+    overflow: auto;
+}
+
+#mindmap-container {
+    width: 100%;
+    min-height: 500px;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .mindmap-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .mindmap-modal-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .mindmap-modal-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .mindmap-modal-body {
+        padding: 1rem;
+    }
+
+    #mindmap-container {
+        min-height: 400px;
+    }
+}
+
+/* ==================== 회의록 생성 진행 모달 스타일 ==================== */
+.minutes-progress-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.minutes-progress-modal.active {
+    display: flex;
+}
+
+.minutes-progress-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 3rem;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.minutes-progress-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    animation: minutesPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes minutesPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+#minutes-progress-status {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.minutes-spinner {
+    margin: 2rem auto;
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: minutesSpin 1s linear infinite;
+}
+
+@keyframes minutesSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.minutes-progress-tip {
+    color: #999;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+    <!-- meeting_id를 JavaScript로 전달 -->
+    <script>
+        const MEETING_ID = "{{ meeting_id }}";
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Markmap CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/markmap-autoloader"></script>
+    <script src="{{ url_for('static', filename='js/viewer.js') }}"></script>
+{% endblock %}

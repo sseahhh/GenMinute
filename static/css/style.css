@@ -1,0 +1,1086 @@
+:root {
+    --nav-bg: #2c3e50;
+    --nav-text: #ecf0f1;
+    --nav-hover: #34495e;
+    --content-bg: #f8f9fa;
+    --sidebar-bg: #f8f9fa;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+    --primary-color: #3498db;
+    --secondary-color: #f0f0f0;
+    --placeholder-text: #999;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--content-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    overflow: hidden; /* Prevent body scroll */
+}
+
+/* --- Main Layout --- */
+.app-container {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    height: 100vh;
+    position: relative;
+}
+
+.content-wrapper {
+    overflow-y: auto; /* Make main content scrollable */
+    transition: margin-right 0.3s ease-in-out;
+}
+
+.app-container.chatbot-open .content-wrapper {
+    margin-right: 400px; /* 챗봇 너비만큼 공간 확보 */
+}
+
+/* --- Left Nav --- */
+.main-nav {
+    background-color: var(--nav-bg);
+    color: var(--nav-text);
+    padding: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+}
+.nav-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 1rem 1rem 1.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-logo img {
+    width: 100%;
+    height: auto;
+    max-width: 150px;
+    object-fit: contain;
+}
+.nav-menu { list-style: none; padding: 0; margin: 0; }
+.nav-header { padding: 0 1.5rem; margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: #95a5a6; }
+.nav-item a { display: flex; align-items: center; padding: 0.75rem 1.5rem; color: var(--nav-text); text-decoration: none; transition: background-color 0.2s; }
+.nav-item.active a, .nav-item a:hover { background-color: var(--nav-hover); }
+.nav-item i { margin-right: 10px; font-size: 1rem; width: 20px; text-align: center; }
+
+/* --- Spacer to push Account section to bottom --- */
+.nav-spacer {
+    flex-grow: 1;
+}
+
+/* --- Account Section (bottom aligned) --- */
+.nav-account {
+    margin-top: auto;
+}
+
+/* --- User Info Card --- */
+.user-info-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: default;
+}
+
+/* --- User Avatar --- */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--nav-text);
+    font-size: 1.2rem;
+}
+
+/* --- User Details --- */
+.user-details {
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.user-email {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#logout-btn { border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 0.5rem; padding-top: 1rem; }
+
+/* --- Chatbot Toggle Tab (Side Tab) --- */
+.chatbot-toggle-tab {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%) translateX(35px);
+    width: 40px;
+    height: 120px;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border: none;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 999;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: white;
+    font-weight: 600;
+    user-select: none;
+}
+
+.chatbot-toggle-tab:hover {
+    transform: translateY(-50%) translateX(0);
+    box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.chatbot-toggle-tab .tab-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.chatbot-toggle-tab .tab-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+}
+
+.chatbot-toggle-tab.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(100%);
+}
+
+/* --- Chatbot Sidebar --- */
+.chatbot-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100vh;
+    background-color: #ffffff;
+    border-left: 1px solid var(--border-color);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+.chatbot-sidebar.open {
+    transform: translateX(0);
+}
+
+/* 페이지 로드 시 transition 비활성화 */
+.chatbot-sidebar.no-transition {
+    transition: none !important;
+}
+
+.app-container.no-transition .content-wrapper {
+    transition: none !important;
+}
+
+/* --- Chatbot Header --- */
+.chatbot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+}
+
+.chatbot-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chatbot-icon-header {
+    font-size: 1.5rem;
+}
+
+.chatbot-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.btn-close-chatbot {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.btn-close-chatbot:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* --- Chatbot Messages Area --- */
+.chatbot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+
+.chatbot-welcome {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.chatbot-icon-large {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #3498db;
+}
+
+.chatbot-welcome p {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* --- Chat Messages --- */
+.chat-message {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-message.user {
+    align-items: flex-end;
+}
+
+.chat-message.assistant {
+    align-items: flex-start;
+}
+
+.chat-bubble {
+    max-width: 75%;
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.chat-message.user .chat-bubble {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message.assistant .chat-bubble {
+    background-color: #e9ecef;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+
+/* --- Chatbot Input --- */
+.chatbot-input-container {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    background-color: white;
+}
+
+.chatbot-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.chatbot-input:focus {
+    border-color: #3498db;
+}
+
+.chatbot-send-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.chatbot-send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.chatbot-send-btn:active {
+    transform: translateY(0);
+}
+
+/* --- Chatbot Loading Animation --- */
+.chat-message.loading .chat-bubble {
+    opacity: 0.6;
+    animation: chatLoading 1.5s infinite;
+}
+
+@keyframes chatLoading {
+    0%, 100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+
+/* --- Content Panel (Upload Page) --- */
+.content-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+}
+.content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.title-input { font-size: 1.8rem; font-weight: bold; border: none; outline: none; width: 100%; }
+.title-input::placeholder { color: var(--placeholder-text); }
+.btn-secondary { background-color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 5px; padding: 10px 20px; font-size: 1rem; cursor: pointer; text-decoration: none; color: var(--text-color); }
+.meeting-form .form-group { margin-bottom: 1.5rem; }
+.meeting-form label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
+.meeting-form input[type="text"], .meeting-form textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 1rem; }
+.meeting-form input[type="datetime-local"] { width: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 1rem; }
+.participants { display: flex; align-items: center; gap: 10px; }
+.participant { background-color: #eee; padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; }
+.btn-add-group { background: none; border: 1px dashed var(--border-color); padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+.drop-zone { border: 2px dashed var(--border-color); border-radius: 10px; padding: 2rem; text-align: center; background-color: #fafafa; transition: background-color 0.2s, border-color 0.2s; }
+.drop-zone.drag-over { border-color: var(--primary-color); background-color: #eaf5fd; }
+.drop-zone-icon { font-size: 3rem; color: var(--primary-color); }
+.btn-primary { background-color: var(--primary-color); color: white; border: none; border-radius: 5px; padding: 10px 20px; font-size: 1rem; cursor: pointer; margin: 1rem 0; white-space: nowrap; }
+.btn-primary:disabled { background-color: #a9cce3; cursor: not-allowed; }
+.file-types-small { font-size: 0.8rem; color: #999; }
+.file-name-display { margin-top: 1rem; font-weight: bold; }
+
+/* --- Viewer Page Styles --- */
+.viewer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+}
+.viewer-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 2rem; }
+.viewer-header h1 { margin: 0; font-size: 2rem; }
+.player-container {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+#audio-player { width: 100%; }
+#video-player { width: 50%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+.transcript-container { border: 1px solid var(--border-color); border-radius: 5px; padding: 1rem; height: calc(100vh - 250px); /* Adjust height based on layout */ overflow-y: auto; background-color: #ffffff; }
+.segment-block { padding: 1rem; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s; }
+.segment-block:last-child { border-bottom: none; }
+.segment-block:hover { background-color: #f8f9fa; }
+.segment-block.current { background-color: #eaf5fd; border-left: 4px solid var(--primary-color); padding-left: calc(1rem - 4px); }
+.segment-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.segment-speaker { font-weight: bold; color: var(--nav-bg); }
+.segment-time { font-size: 0.9rem; color: #777; }
+.segment-block-text { margin: 0; line-height: 1.6; color: #333; }
+.error-message { color: #e74c3c; text-align: center; padding: 2rem; }
+
+.flash-error {
+    background-color: #e74c3c;
+    color: white;
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* --- Notes List Page Styles --- */
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-color);
+    background-color: #ffffff;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.note-item:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+}
+
+.note-item-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.note-item-date {
+    font-size: 0.9rem;
+    color: #777;
+}
+
+/* --- Retriever Page Styles --- */
+.retriever-form {
+    margin-bottom: 2rem;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.radio-group label {
+    font-weight: normal;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 2rem 0;
+}
+
+#results-area h3 {
+    margin-bottom: 1rem;
+}
+
+.result-item {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.result-metadata {
+    background-color: #f0f0f0;
+    padding: 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    white-space: pre-wrap; /* Allow wrapping */
+    word-break: break-all;
+    margin-top: 1rem;
+    color: #555;
+}
+
+/* --- Tab Styles --- */
+.tabs-container {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--text-color);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.tab-button:hover {
+    background-color: #f8f9fa;
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.tab-content-container {
+    position: relative;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* --- Summary Container Styles --- */
+.summary-container {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 1.5rem;
+    height: calc(100vh - 320px);
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+.summary-placeholder {
+    text-align: center;
+    color: #999;
+    padding: 3rem;
+    font-size: 1.1rem;
+}
+
+.summary-content {
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.summary-content h3 {
+    color: var(--nav-bg);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.3rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.summary-content ul {
+    margin: 0.5rem 0 1.5rem 1.5rem;
+    padding: 0;
+}
+
+.summary-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.summary-loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--primary-color);
+}
+
+.summary-error {
+    text-align: center;
+    padding: 3rem;
+    color: #e74c3c;
+}
+
+/* --- Minutes Container Styles --- */
+.minutes-container {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 1.5rem;
+    height: calc(100vh - 320px);
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+.minutes-placeholder {
+    text-align: center;
+    color: #999;
+    padding: 3rem;
+    font-size: 1.1rem;
+}
+
+/* 회의록이 없을 때 위쪽 정렬 레이아웃 */
+.minutes-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding-top: 3rem;
+}
+
+.minutes-empty .btn-primary {
+    margin: 0;
+}
+
+.minutes-empty .minutes-placeholder {
+    padding: 0;
+    margin: 0;
+}
+
+.minutes-content {
+    line-height: 1.8;
+    color: var(--text-color);
+    background-color: white;
+    padding: 2rem;
+    border-radius: 5px;
+}
+
+.minutes-content h1 {
+    color: var(--nav-bg);
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.minutes-content h2 {
+    color: var(--nav-bg);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.minutes-content h3 {
+    color: var(--text-color);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+}
+
+.minutes-content p {
+    margin-bottom: 1rem;
+    line-height: 1.8;
+}
+
+.minutes-content strong {
+    color: var(--nav-bg);
+}
+
+.minutes-content hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 2rem 0;
+}
+
+.minutes-loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--primary-color);
+}
+
+.minutes-error {
+    text-align: center;
+    padding: 3rem;
+    color: #e74c3c;
+}
+
+/* --- Progress Modal --- */
+.progress-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-modal.active {
+    display: flex;
+}
+
+.progress-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 3rem;
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.progress-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.progress-modal-content h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--nav-bg);
+    font-size: 1.8rem;
+}
+
+/* 단계 표시 */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    gap: 0.5rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    background: #f5f5f5;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+.step.active {
+    background: #e3f2fd;
+    border-color: #3498db;
+}
+
+.step.completed {
+    background: #e8f5e9;
+}
+
+.step-icon {
+    font-size: 1.8rem;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.step-arrow {
+    font-size: 1.2rem;
+    color: #ccc;
+}
+
+#progress-status {
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* 로딩 스피너 */
+.spinner {
+    margin: 2rem auto;
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.progress-tip {
+    color: #999;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+/* --- Tab Container (오디오/스크립트 전환) --- */
+.tab-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: none;
+    background-color: transparent;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+    position: relative;
+    bottom: -2px;
+}
+
+.tab-button:hover {
+    color: var(--primary-color);
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* --- Script Input Textarea --- */
+#script-text-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 300px;
+    transition: border-color 0.3s ease;
+}
+
+#script-text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#script-text-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+/* ==================== 회의 정보 섹션 ==================== */
+.meeting-info-section {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.meeting-date {
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.meeting-date span {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.meeting-participants {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.participants-list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.speaker-share-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.speaker-share-btn:hover {
+    background: #357abd;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.participant-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: default;
+    transition: transform 0.2s ease;
+}
+
+.participant-icon:hover {
+    transform: scale(1.1);
+}
+
+.participant-icon span {
+    user-select: none;
+}
+
+.no-participants {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* === 화자별 점유율 모달 스타일 === */
+.speaker-share-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.speaker-share-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.speaker-share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.speaker-share-modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-color);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    color: #333;
+}
+
+.speaker-share-modal-body {
+    padding: 1rem 0;
+}
+
+.speaker-share-modal-body canvas {
+    max-height: 400px;
+}

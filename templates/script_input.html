@@ -1,0 +1,49 @@
+
+{% extends "layout.html" %}
+
+{% block title %}스크립트 입력{% endblock %}
+
+{% block content %}
+<main class="content-panel">
+    <header class="content-header">
+        <input type="text" name="title" form="script-form" placeholder="제목을 입력 해주세요" class="title-input">
+        <button type="submit" form="script-form" class="btn-primary">스크립트 처리</button>
+    </header>
+    {% if error %}
+        <div class="flash-error">{{ error }}</div>
+    {% endif %}
+    <form class="meeting-form" id="script-form" method="POST" action="{{ url_for('admin.upload_script') }}" novalidate>
+        <div class="form-group">
+            <label>참여자</label>
+            <div class="participants">
+                <span class="participant">shwinwiz +</span>
+                <button type="button" class="btn-add-group">추가</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>회의 일시</label>
+            <input type="datetime-local" name="meeting_date" id="script-meeting-date">
+        </div>
+        <div class="form-group">
+            <label>스크립트 내용</label>
+            <textarea name="script_text" id="script-text-input" rows="15" placeholder="지원 형식:&#10;1: 안녕하세요. 회의를 시작하겠습니다.&#10;2: 네, 좋습니다.&#10;&#10;또는&#10;화자A: 안녕하세요.&#10;화자B: 네, 반갑습니다.&#10;&#10;또는&#10;[1] 안녕하세요.&#10;[2] 네, 좋습니다." required></textarea>
+            <p class="file-types-small">지원 형식: "화자번호: 텍스트", "화자이름: 텍스트", "[화자번호] 텍스트" 등</p>
+        </div>
+    </form>
+
+    <!-- 프로그레스바 모달 -->
+    <div id="progress-modal" class="progress-modal">
+        <div class="progress-modal-content">
+            <div class="progress-icon">📝</div>
+            <h2>스크립트 처리 중...</h2>
+            <p id="progress-status">스크립트를 분석하고 있습니다</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar">
+                    <span class="progress-text" id="progress-text">0%</span>
+                </div>
+            </div>
+            <p class="progress-tip">평균 처리 시간: 1-2분</p>
+        </div>
+    </div>
+</main>
+{% endblock %}

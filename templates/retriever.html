@@ -1,0 +1,48 @@
+
+{% extends "layout.html" %}
+
+{% block title %}리트리버 테스트{% endblock %}
+
+{% block content %}
+<main class="content-panel">
+    <header class="content-header">
+        <h1 class="title-input">리트리버 테스트</h1>
+    </header>
+
+    <form id="retriever-form" class="meeting-form"> {# meeting-form 스타일 재사용 #}
+        <div class="form-group">
+            <label for="query-input">검색어</label>
+            <input type="text" id="query-input" name="query" placeholder="검색할 내용을 입력하세요..." required>
+        </div>
+        <div class="form-group">
+            <label>검색 대상 DB</label>
+            <div class="radio-group">
+                <label><input type="radio" name="db_type" value="chunks" checked> meeting_chunks (대화 조각)</label>
+                <label><input type="radio" name="db_type" value="subtopic"> meeting_subtopic (AI 요약)</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="retriever-type-select">리트리버 타입</label>
+            <select id="retriever-type-select" name="retriever_type" class="form-control">
+                <option value="similarity" selected>Similarity (유사도) - 권장</option>
+                <option value="mmr">MMR (최대 한계 관련성)</option>
+                <option value="self_query">Self-Query (실험적, 날짜 필터 제한)</option>
+            </select>
+            <small style="color: #666; display: block; margin-top: 5px;">
+                ℹ️ Self-Query는 날짜 필터 사용 시 자동으로 Similarity로 전환됩니다.
+            </small>
+        </div>
+        <button type="submit" class="btn-primary">검색</button>
+    </form>
+
+    <hr class="divider">
+
+    <div id="results-area">
+        <p>검색 결과가 여기에 표시됩니다.</p>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/retriever.js') }}"></script>
+{% endblock %}

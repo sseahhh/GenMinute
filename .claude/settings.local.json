@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python app.py:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(sqlite3:*)",
+      "Bash(python3 -m py_compile:*)",
+      "Bash(python3:*)",
+      "Bash(bash -c \"source ~/miniconda3/etc/profile.d/conda.sh && conda activate genminute && python3 -c ''''import app; print(\"\"✅ App import successful\"\")''''\")",
+      "Bash(for file in app.py utils/*.py)",
+      "Bash(do python3 -m py_compile:*)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "WebSearch",
+      "Bash(mkdir:*)",
+      "Bash(pandoc:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
