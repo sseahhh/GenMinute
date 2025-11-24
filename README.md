@@ -1,0 +1,2 @@
+# GenMinute
+AI minute 
