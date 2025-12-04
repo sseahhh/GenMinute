@@ -203,7 +203,7 @@ LOG_LEVEL=ERROR
 ### 🎯 핵심 파일 (35개)
 
 ```
-seoulloc/
+genminute_ai/
 ├── app.py                        # 🚀 Flask 앱 메인 진입점
 ├── config.py                     # ⚙️ 환경 변수 및 설정 관리
 │
@@ -633,5 +633,3 @@ admin_emails = config.ADMIN_EMAILS  # ✅ 이미 list로 처리됨
 **2회차 리팩토링이 완료되었습니다!**
 - 1차: Routes & Services 정리 (49개 print → logger)
 - 2차: Utils 디렉토리 정리 (184개 print → logger + Singleton 3개 + 환경변수 중앙화)
-
-**새로운 기능 개발이나 "Seoul Council Translator" 프로젝트를 시작할 준비가 완료되었습니다!** 🎉

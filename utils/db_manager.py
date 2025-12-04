@@ -29,10 +29,130 @@ class DatabaseManager:
         self._initialized = True
         logger.info(f"✅ DatabaseManager 초기화: {db_path}")
 
+        # 데이터베이스 테이블 자동 생성
+        self._initialize_tables()
+
     def _get_connection(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
+
+    def _initialize_tables(self):
+        """
+        데이터베이스 테이블을 자동으로 생성합니다.
+        app.py 시작 시 자동으로 호출되어 필요한 모든 테이블을 생성합니다.
+        """
+        import os
+
+        # database 폴더 생성
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 1. meeting_dialogues 테이블 (음성인식 결과)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_dialogues (
+                    segment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    meeting_id TEXT NOT NULL,
+                    meeting_date TEXT,
+                    speaker_label TEXT,
+                    start_time REAL,
+                    segment TEXT,
+                    confidence REAL,
+                    audio_file TEXT,
+                    title TEXT,
+                    owner_id INTEGER
+                )
+            """)
+
+            # 2. meeting_minutes 테이블 (회의록)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_minutes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    meeting_id TEXT UNIQUE NOT NULL,
+                    title TEXT,
+                    meeting_date TEXT,
+                    minutes_content TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    owner_id INTEGER
+                )
+            """)
+
+            # 3. meeting_mindmap 테이블 (마인드맵)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_mindmap (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    meeting_id TEXT UNIQUE NOT NULL,
+                    mindmap_content TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 4. users 테이블 (사용자 정보)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    google_id TEXT UNIQUE NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    name TEXT,
+                    profile_picture TEXT,
+                    role TEXT DEFAULT 'user',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 5. meeting_shares 테이블 (공유 정보)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_shares (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    meeting_id TEXT NOT NULL,
+                    owner_id INTEGER NOT NULL,
+                    shared_with_user_id INTEGER NOT NULL,
+                    permission TEXT DEFAULT 'read',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (owner_id) REFERENCES users(id),
+                    FOREIGN KEY (shared_with_user_id) REFERENCES users(id),
+                    UNIQUE(meeting_id, shared_with_user_id)
+                )
+            """)
+
+            # 6. 인덱스 생성 (성능 최적화)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_meeting_id ON meeting_dialogues(meeting_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_owner_id ON meeting_dialogues(owner_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_shares_meeting ON meeting_shares(meeting_id)")
+
+            # 7. Admin 사용자 자동 생성
+            from config import config
+            admin_emails = config.ADMIN_EMAILS
+
+            if admin_emails:
+                for email in admin_emails:
+                    if email.strip():  # 빈 문자열 제외
+                        try:
+                            cursor.execute("""
+                                INSERT INTO users (google_id, email, name, role)
+                                VALUES (?, ?, ?, 'admin')
+                            """, (f"admin_{email}", email, "Admin User"))
+                            logger.info(f"✅ Admin 사용자 생성: {email}")
+                        except sqlite3.IntegrityError:
+                            # 이미 존재하는 경우 (정상)
+                            pass
+
+            conn.commit()
+            logger.info("✅ 데이터베이스 테이블 초기화 완료")
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"❌ 데이터베이스 테이블 초기화 실패: {e}")
+            raise
+
+        finally:
+            conn.close()
 
     def save_stt_to_db(self, segments, audio_filename, title, meeting_date=None, owner_id=None):
         """
